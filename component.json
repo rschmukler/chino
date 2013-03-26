@@ -12,6 +12,7 @@
   ],
   "dependencies": {
     "monstercat/jade-runtime": "*",
+    "component/dom": "*",
     "ForbesLindesay/is-browser": "*"
   },
   "development": {},
