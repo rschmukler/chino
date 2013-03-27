@@ -27,7 +27,7 @@
     "is-browser": "~2.0.0",
     "cheerio": "~0.10.8",
     "batch": "~0.3.2",
-    "component-jade": "0.0.2",
+    "component-jade": "git://github.com/segmentio/component-jade.git",
     "extend": "~1.1.3"
   }
 }
