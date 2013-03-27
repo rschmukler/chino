@@ -19,7 +19,9 @@ This method requires all essential variables to be passed in as arguments.
 
     var Chino = require('chino');
 
-    var TodoItem = Chino.View('TodoItem', __dirname, {template: 'todo-item.jade'});
+    var path = (typeof __dirname == 'undefined' ? 'todo-item' : __dirname);
+
+    var TodoItem = Chino.View('TodoItem', path, {template: 'todo-item.jade'});
 
 #### Chino.View(baseObject)
 
@@ -28,10 +30,11 @@ template. Required properties for this object are: `_name`, `_basePath`, and
 `_template`
 
     var Chino = require('chino');
+    var path = (typeof __dirname == 'undefined' ? 'todo-item' : __dirname);
 
     var TodoItem = Chino.View({
       name: 'TodoItem',
-      basePath: __dirname,
+      basePath: path,
       template: 'todo-item.jade'
     })
 
