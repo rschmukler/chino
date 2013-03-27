@@ -9,7 +9,31 @@
 
 ## API
 
-   
+### Creating Views
+
+There are two ways to create new views in `Chino`. 
+
+#### Chino.View(name, path-to-templates, options)
+
+This method requires all essential variables to be passed in as arguments.
+
+    var Chino = require('chino');
+
+    var TodoItem = Chino.View('TodoItem', __dirname, {template: 'todo-item.jade'});
+
+#### Chino.View(baseObject)
+
+This method requires an object that will be extended to create the view
+template. Required properties for this object are: `_name`, `_basePath`, and
+`_template`
+
+    var Chino = require('chino');
+
+    var TodoItem = Chino.View({
+      name: 'TodoItem',
+      basePath: __dirname,
+      template: 'todo-item.jade'
+    })
 
 ## License
 
