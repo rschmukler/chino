@@ -13,7 +13,8 @@
   "dependencies": {
     "monstercat/jade-runtime": "*",
     "component/dom": "*",
-    "ForbesLindesay/is-browser": "*"
+    "ForbesLindesay/is-browser": "*",
+    "gorillatron/extend": "*"
   },
   "development": {},
   "license": "MIT",
