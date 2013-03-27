@@ -14,7 +14,7 @@
     "monstercat/jade-runtime": "*",
     "component/dom": "*",
     "ForbesLindesay/is-browser": "*",
-    "gorillatron/extend": "*"
+    "rschmukler/node-extend": "*"
   },
   "development": {},
   "license": "MIT",

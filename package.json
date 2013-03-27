@@ -25,9 +25,9 @@
   "dependencies": {
     "jade": "~0.28.2",
     "is-browser": "~2.0.0",
-    "extend": "git://github.com/gorillatron/extend.git",
     "cheerio": "~0.10.8",
     "batch": "~0.3.2",
-    "component-jade": "0.0.2"
+    "component-jade": "0.0.2",
+    "node-extend": "~0.2.0"
   }
 }
