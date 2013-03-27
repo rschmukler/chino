@@ -19,6 +19,7 @@
   "license": "MIT",
   "scripts": [
     "index.js",
+    "lib/chino.js",
     "lib/view/index.js",
     "lib/view/client.js"
   ]
