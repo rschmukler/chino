@@ -13,7 +13,8 @@
   "dependencies": {
     "component/dom": "*",
     "ForbesLindesay/is-browser": "*",
-    "rschmukler/node-extend": "*"
+    "rschmukler/node-extend": "*",
+    "jb55/domready": "*"
   },
   "development": {},
   "license": "MIT",
