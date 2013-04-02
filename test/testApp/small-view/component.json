@@ -1,0 +1,11 @@
+{
+  "name": "Small-View",
+  "version": "0.0.1",
+  "keywords": [],
+  "dependencies": {
+    "rschmukler/chino": "*"
+  },
+  "scripts" : ["small-view.js"],
+  "templates": ["small-view.jade"],
+  "development": {}
+}

@@ -1,0 +1,14 @@
+{
+  "name": "Test-App",
+  "version": "0.0.1",
+  "paths": ["./"],
+  "keywords": [],
+  "dependencies": {
+    "rschmukler/chino": "*"
+  },
+  "development": {},
+  "local": [
+    "small-view"
+  ]
+}
+

@@ -22,6 +22,7 @@
     "index.js",
     "lib/chino.js",
     "lib/view/index.js",
-    "lib/view/client.js"
+    "lib/view/client.js",
+    "lib/view/glue.js"
   ]
 }

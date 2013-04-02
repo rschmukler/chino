@@ -38,6 +38,13 @@ template. Required properties for this object are: `_name`, `_basePath`, and
       template: 'todo-item.jade'
     })
 
+### Gluing Views
+
+After you have defined your views, you can use `Chino.ready` to apply Chino's
+glue. Chino's glue will find views rendered server side and instantiate client
+side equivalents with the appropriate DOM elements. This means that you can
+define events for views rendered server side and have them apply client side.
+
 ## License
 
   MIT
