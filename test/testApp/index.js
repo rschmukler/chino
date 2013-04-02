@@ -1,13 +1,14 @@
 var express = require('express');
-var app = module.exports = express(),
-BigView = require('./big-view/big-view.js');
-SmallView = require('./small-view/small-view.js');
+    app = module.exports = express(),
+  Chino = require('../../'),
+BigView = require('./big-view'),
+SmallView = require('./small-view');
 
 
 app.get('/', function(req, res) {
   var bigView = new BigView({someVariable: "test", overWrittenVariable: "not-overwritten"});
-  var smallView = new SmallView({locationName: 'server side'});
-  res.end(bigView.render({overWrittenVariable: "OVERWRITTEN"}));
+  var smallView = new SmallView({locationName: 'server'});
+  res.end(bigView.render({overWrittenVariable: "OVERWRITTEN"}) + smallView.render());
 });
 
 app.use(express.static(__dirname + '/build'));

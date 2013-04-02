@@ -4,7 +4,17 @@ html
     title TestChinoApplication
     script(src="/build.js")
 
+
   body
     h1 This is a #{someVariable}
     h2 Testing 123
     h3= overWrittenVariable 
+
+    script
+      var SmallView = require('small-view');
+      var smallView = new SmallView({locationName: 'client'});
+      var $ = require('component-dom');
+      var Chino = require('chino');
+      Chino.ready(function() {
+        $('body').append(smallView.render());
+      })

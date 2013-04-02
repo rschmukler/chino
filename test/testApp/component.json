@@ -1,14 +1,15 @@
 {
-  "name": "Test-App",
+  "name": "testApp",
   "version": "0.0.1",
-  "paths": ["./"],
+  "paths": ["./", "../../../"],
   "keywords": [],
   "dependencies": {
-    "rschmukler/chino": "*"
+    "component/dom": "*"
   },
   "development": {},
   "local": [
-    "small-view"
+    "small-view",
+    "chino"
   ]
 }
 

@@ -1,5 +1,5 @@
 var testApp = require('./testApp'),
-    BigView = require('./testApp/big-view/big-view'),
+    BigView = require('./testApp/big-view'),
     expect = require('expect.js'),
     zombie = require('zombie'),
     Chino = require('../'),
@@ -70,5 +70,29 @@ describe("Server Side", function() {
 });
 
 describe("Client Side", function() {
+  beforeEach(function(done) { browser.visit('/', done); });
+  describe("Rendering", function() {
+    it("jade templates", function() {
+      expect(browser.text('a')).to.match(/This was rendered as a small view from the/);
+    });
+    it("variables", function() {
+      expect(browser.text('a')).to.match(/client/);
+    });
+  });
 
+  it("uses setEvents", function(done) {
+    browser.clickLink("This was rendered as a small view from the client", function() {
+      expect(browser.queryAll(".active")).to.have.length(1);
+      done();
+    });
+  });
+});
+
+describe("Glue", function() {
+  it("registers client side views for server rendered templates", function(done) {
+    browser.clickLink("This was rendered as a small view from the server", function() {
+      expect(browser.queryAll(".active")).to.have.length(1);
+      done();
+    });
+  });
 });
