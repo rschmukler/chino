@@ -1,19 +1,22 @@
 
+[![Build Status](https://travis-ci.org/rschmukler/chino.png?branch=master)](https://travis-ci.org/rschmukler/chino)
+
 # chino
 
   Jade based views that render server and client side
 
-## Installation
+# Installation
 
     $ component install rschmukler/chino
+    $ npm install chino
 
-## API
+# API
 
-### Defining Views
+## Defining Views
 
 There are two ways to define new views in `Chino`. 
 
-#### Chino.View(name, path-to-templates, options)
+### Chino.View(name, path-to-templates, options)
 
 This method requires all essential variables to be passed in as arguments.
 
@@ -23,7 +26,7 @@ This method requires all essential variables to be passed in as arguments.
 
     var TodoItem = Chino.View('TodoItem', path, {template: 'todo-item.jade'});
 
-#### Chino.View(baseObject)
+### Chino.View(baseObject)
 
 This method requires an object that will be extended to create the view
 template. Required properties for this object are: `_name`, `_basePath`, and
@@ -38,7 +41,7 @@ template. Required properties for this object are: `_name`, `_basePath`, and
       template: 'todo-item.jade'
     })
 
-#### Specials
+### Specials
 
 Specials are objects that, when given JSON, should be instantiated with the JSON
 as an argument to the constructor. The local variable will then be overwritten.
@@ -73,11 +76,11 @@ Specials can either be set directly, or as part of the `baseObject` passed to
     todoItemView.locals.todo instanceof Todo == true; // Returns true, used the JSON to construct a new Todo instance
 
 
-### Instantiating Views
+## Instantiating Views
 
 Once you've defined a view, you can create instances of it. 
 
-### View( [locals] )
+## View( [locals] )
 
     var TodoItemView = require('todo-item-view');
 
@@ -87,10 +90,10 @@ Once you've defined a view, you can create instances of it.
     => Take out trash
 
 
-### View Instance Methods/Properties
+## View Instance Methods/Properties
 
 
-#### $el
+### $el
 
 `$el` is exposed to represent a jQuery-like object that is provided by either
 [matthewmueller/cheerio](http://github.com/matthewmuller/cheerio) or
@@ -104,19 +107,19 @@ Once you've defined a view, you can create instances of it.
       todoList.$el.find('ul').append('<li>' + todo + '</li>');
     });
 
-#### initialize()
+### initialize()
 
 `initialize` is called after a view has been instantiated. At this point,
 `locals` have been set and `setEvents` has been called. This is a good place to
 add any code needed before rendering happens (such as setting default values).
 
-#### locals
+### locals
 
 `locals` is an object of all the variables to expose to the template and a place
 to store objects/data related to the view.
 
 
-#### render( [overWrittenLocals] )
+### render( [overWrittenLocals] )
 
 By default this calls `renderTemplate` and then calls `postRender`.
 
@@ -127,14 +130,14 @@ which would render the template.
 `overWrittenLocals` will be passed into the view and _temporarily_ overwrite the
 values of `locals`
 
-#### renderTemplate( [overWrittenLocals] )
+### renderTemplate( [overWrittenLocals] )
 
 Returns the HTML of the rendered template and sets a jQuery-like object for `$el`.
 `overWrittenLocals` will be passed into the view and _temporarily_ overwrite the
 values of `locals`. `view` will also be exposed to the template, pointing to the
 instance of the `Chino View`.
 
-#### postRender()
+### postRender()
 
 This should be called after `render`. Useful for processing `$el` after the
 template has been rendered.
@@ -148,7 +151,7 @@ template has been rendered.
       }
     });
 
-#### setEvents()
+### setEvents()
 
 `setEvents` is called `client` side and attaches event listeners. Generally you
 should only listen to events on elements within your `Chino.View` and not the
@@ -170,13 +173,13 @@ should only listen to events on elements within your `Chino.View` and not the
       }
     });
 
-### Gluing Views
+## Gluing Views
 
 After you have defined your views, you can use `Chino.ready` to apply Chino's
 glue. Chino's glue will find views rendered server side and instantiate client
 side equivalents with the appropriate DOM elements. This means that you can
 define events for views rendered server side and have them apply client side.
 
-## License
+# License
 
   MIT
