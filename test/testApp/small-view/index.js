@@ -1,4 +1,4 @@
-var Chino = (typeof process == 'undefined') ? window.require('chino') : require('chino');
+var Chino = (typeof process == 'undefined') ? window.require('chino') : require('../../../');
 
 var path = Chino.isBrowser ? 'small-view' : __dirname;
 
