@@ -1,9 +1,8 @@
+# chino
 
 [![Build Status](https://travis-ci.org/rschmukler/chino.png?branch=master)](https://travis-ci.org/rschmukler/chino)
 
-# chino
-
-  Jade based views that render server and client side
+Jade based views that render server and client side
 
 # Installation
 
