@@ -1,0 +1,31 @@
+{
+  "name": "dom",
+  "version": "0.4.0",
+  "description": "DOM traversal, manipulation and events aggregate library",
+  "keywords": [
+    "html",
+    "dom",
+    "ui",
+    "jquery"
+  ],
+  "scripts": [
+    "index.js"
+  ],
+  "dependencies": {
+    "component/type": "*",
+    "component/event": "*",
+    "component/delegate": "*",
+    "component/indexof": "*",
+    "component/domify": "*",
+    "component/classes": "*",
+    "component/css": "*",
+    "component/sort": "*",
+    "component/query": "*"
+  },
+  "development": {
+    "component/assert": "*",
+    "visionmedia/mocha-matrix": "*"
+  },
+  "license": "MIT",
+  "repo": "https://raw.github.com/component/dom"
+}

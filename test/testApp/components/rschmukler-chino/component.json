@@ -1,0 +1,27 @@
+{
+  "name": "chino",
+  "repo": "rschmukler/chino",
+  "description": "Jade based views that render server and client side",
+  "version": "0.0.1",
+  "keywords": [
+    "chino",
+    "modella",
+    "views",
+    "jade",
+    "express"
+  ],
+  "dependencies": {
+    "component/dom": "*",
+    "ForbesLindesay/is-browser": "*",
+    "rschmukler/node-extend": "*",
+    "jb55/domready": "*"
+  },
+  "development": {},
+  "license": "MIT",
+  "scripts": [
+    "index.js",
+    "lib/chino.js",
+    "lib/view/index.js",
+    "lib/view/client.js"
+  ]
+}
