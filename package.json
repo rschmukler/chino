@@ -25,7 +25,7 @@
   "dependencies": {
     "jade": "~0.28.2",
     "is-browser": "~2.0.0",
-    "cheerio": "~0.10.8",
+    "cheerio": "git://github.com/MatthewMueller/cheerio.git",
     "batch": "~0.3.2",
     "component-jade": "git://github.com/segmentio/component-jade.git",
     "extend": "~1.1.3"
