@@ -14,6 +14,22 @@ after(function() {
   testApp.close();
 });
 
+
+describe("Middleware", function() {
+
+});
+
+describe("API", function() {
+  describe("#use", function() {
+    it("passes Chino to the plugin", function() {
+      var specFunction = function(passed) {
+        expect(passed).to.be(Chino);
+      };
+      Chino.use(specFunction);
+    });
+  });
+});
+
 describe("Creating Views", function() {
   it("sets hidden properties from object", function() {
     var SomeView = Chino.View({name: 'SomeView', basePath: __dirname + '/testApp/big-view' , template: 'big-view.jade'});
