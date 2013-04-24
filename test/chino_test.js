@@ -13,11 +13,54 @@ before(function() {
 
 after(function() {
   testApp.close();
+  browser.close();
 });
 
 
 describe("Middleware", function() {
+});
 
+describe("Data Store", function() {
+  describe("addLookupIdMethod", function() {
+    it("adds a way to lookup the id of an object", function() {
+      Chino.DataStore.addLookupIdMethod('slug');
+      var obj = {slug: 'i-like-turtles', title: "Turtles attacking New York" };
+      expect(Chino.DataStore.addObject(obj)).to.be(obj.slug);
+    });
+  });
+
+  describe(".addObject", function() {
+    it("returns the lookup id of the object", function() {
+      var obj = { id: 1, title: "Yippie!" };
+      expect(Chino.DataStore.addObject(obj)).to.be.ok();
+    });
+
+    it("uses the id of the object if possible", function() {
+      var obj = { id: 1, title: "Yippie!" };
+      expect(Chino.DataStore.addObject(obj)).to.be(obj.id);
+    });
+
+    it("generates an id if it doesn't already have one", function() {
+      var obj = { title: "Yippie" };
+      expect(Chino.DataStore.addObject(obj)).to.be.a('string');
+    });
+  });
+
+  describe(".get", function() {
+    var obj, lookupId;
+    before(function() {
+      obj = { title: "this is a test", somethingElse: true };
+      lookupId = Chino.DataStore.addObject(obj);
+    });
+
+    it("returns the object from the datastore", function() {
+      expect(Chino.DataStore.get(lookupId)).to.be(obj);
+    });
+
+    it("returns null if the object doesn't exist", function() {
+      expect(Chino.DataStore.get("sfadjadfslkj")).to.be(null);
+    });
+  });
 });
 
 describe("API", function() {
