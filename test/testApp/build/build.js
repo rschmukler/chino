@@ -1385,7 +1385,28 @@ attrs.forEach(function(name){
 
 });
 require.register("small-view/index.js", function(exports, require, module){
-var Chino = (typeof process == 'undefined') ? window.require('chino') : require('chino');
+var Chino = (typeof process == 'undefined') ? window.require('chino') : require('../../../');
+
+Function.prototype.bind = Function.prototype.bind || function(to){
+		// Make an array of our arguments, starting from second argument
+	var	partial	= Array.prototype.splice.call(arguments, 1),
+		// We'll need the original function.
+		fn	= this;
+	var bound = function (){
+		// Join the already applied arguments to the now called ones (after converting to an array again).
+		var args = partial.concat(Array.prototype.splice.call(arguments, 0));
+		// If not being called as a constructor
+		if (!(this instanceof bound)){
+			// return the result of the function called bound to target and partially applied.
+			return fn.apply(to, args);
+		}
+		// If being called as a constructor, apply the function bound to self.
+		fn.apply(this, args);
+	};
+	// Attach the prototype of the function to our newly created function.
+	bound.prototype = fn.prototype;
+	return bound;
+};
 
 var path = Chino.isBrowser ? 'small-view' : __dirname;
 
@@ -1565,9 +1586,14 @@ var isBrowser = require('is-browser');
 exports.View = require('./view');
 exports.isBrowser = isBrowser;
 
+exports.use = function(plugin) {
+  plugin(this);
+};
+
 if(!isBrowser)
 {
   exports.BuilderPlugins = require('./build');
+  exports.Middleware = require('./middleware');
 } else {
   var domready = require('domready'),
           glue = require('./view/glue.js');
@@ -1587,26 +1613,31 @@ var isBrowser = require('is-browser'),
     extend = require('extend'),
     Chino = require('../chino.js');
 
- module.exports = function createView() {
+
+ var createView = module.exports = function createView() {
   var View = function(locals) {
     this.View = View;
     this.locals = locals || {};
 
 
+    // Set $el
     if(isBrowser) {
       //Check to see if we have an el instead of locals
-      if(locals && typeof(locals.length) == 'function') {
-        this.$el = $(locals);
-        if(this.setEvents) this.setEvents.call(this);
+      if(locals && (locals instanceof createView.engine || typeof locals.length == 'function')) {
+        this.$el = createView.engine(locals);
+        this.$el.attr('data-chino-init', true);
         this._parseLocals();
       }
     } else {
       this.$el = require('cheerio').load('');
     }
 
-
-
     if(this.initialize) this.initialize.call(this);
+
+    if(isBrowser && this.$el && this.setEvents) {
+      this.setEvents.call(this);
+    }
+
   };
 
   var args = Array.prototype.slice.call(arguments);
@@ -1618,7 +1649,7 @@ var isBrowser = require('is-browser'),
     View._basePath = args.shift();
 
     options = args.shift() || {};
-    View._template = options.template || './template.jade';
+    View._template = options.template;
   } else {
     var cloneObject = args.shift();
 
@@ -1626,6 +1657,9 @@ var isBrowser = require('is-browser'),
       View['_' + key] = cloneObject[key];
     }
   }
+
+  // Set some defaults
+  View._template = View._template || 'template.jade';
 
   extend(View, ChinoView);
   extend(View.prototype, ChinoView.prototype);
@@ -1683,8 +1717,11 @@ ChinoView.prototype._postRenderTemplate = function() {
 
 });
 require.register("chino/lib/view/client.js", function(exports, require, module){
-dom = require('dom');
+View = require('./index');
 extend = require('extend');
+
+
+View.engine = View.engine || require('dom');
 
 module.exports = function(ChinoView) {
 
@@ -1704,7 +1741,7 @@ module.exports = function(ChinoView) {
   ChinoView.prototype.renderTemplate = function(locals) {
     window.item = this;
     var variables = extend({view: this}, this.locals, locals);
-    this.$el = dom(this.View._renderer(variables));
+    this.$el = View.engine(this.View._renderer(variables));
     this._postRenderTemplate();
     if(this.setEvents) this.setEvents.call(this);
     return this.toHTML();
@@ -1717,14 +1754,35 @@ module.exports = function(ChinoView) {
 
 });
 require.register("chino/lib/view/glue.js", function(exports, require, module){
-var Chino = require('../chino.js'),
-        $ = require('dom');
+var Chino = require('../chino.js');
+
+var initViews = [];
 
 module.exports = function() {
-  $('[data-view-name]').forEach(function(el) {
-    var viewName = $(el).attr('data-view-name');
-    if(Chino.Views[viewName])
-      var view = new Chino.Views[viewName]($(el));
+  var $ = Chino.View.engine;
+  $('[data-view-name]').each(function(firstArg, secondArg) {
+    var $el;
+
+    if(typeof firstArg == 'number') {
+        if(initViews.indexOf(secondArg) != -1) {
+          return false;
+        }
+        $el = $(secondArg);
+        initViews.push(secondArg);
+    } else {
+        if(initViews.indexOf(firstArg) != -1) {
+          return false;
+        }
+        $el = $(firstArg);
+        initViews.push(firstArg);
+    }
+
+    var viewName = $el.attr('data-view-name');
+
+    if(Chino.Views[viewName]) {
+      var view = new Chino.Views[viewName]($el);
+      window.lastView = view;
+    }
   });
 };
 

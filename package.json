@@ -35,6 +35,6 @@
     "component-builder": "~0.6.5",
     "mocha": "~1.9.0",
     "expect.js": "~0.2.0",
-    "zombie": "~1.4.1"
+    "selenium-webdriver": "~2.32.1"
   }
 }

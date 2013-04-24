@@ -1,13 +1,14 @@
 var testApp = require('./testApp'),
     BigView = require('./testApp/big-view'),
     expect = require('expect.js'),
-    zombie = require('zombie'),
+    WebDriver = require('selenium-webdriver'),
     Chino = require('../'),
+    By = WebDriver.By,
     browser;
 
 before(function() {
   testApp = testApp.listen(12345);
-  browser = new zombie({site: 'http://localhost:12345'});
+  browser = new WebDriver.Builder().usingServer('http://localhost:8080').withCapabilities({browserName: 'phantomjs'}).build();
 });
 
 after(function() {
@@ -60,45 +61,69 @@ describe("View Behavior", function() {
 });
 
 describe("Server Side", function() {
-  before(function(done) { browser.visit('/', done); });
+  before(function() { browser.get('http://localhost:12345/'); });
 
   describe("Rendering", function() {
-    it("jade templates", function() {
-      expect(browser.text('h1')).to.match(/This is a/);
+    it("jade templates", function(done) {
+      browser.findElement(By.css('h1')).getText().then(function(text) {
+        expect(text).to.match(/This is a/);
+        done();
+      });
     });
 
-    it("variables", function() {
-      expect(browser.text('h1')).to.match(/test/);
+    it("variables", function(done) {
+      browser.findElement(By.css('h1')).getText().then(function(text) {
+        expect(text).to.match(/test/);
+        done();
+      });
     });
 
-    it("allows overwriting of variables", function() {
-      expect(browser.text('h3')).to.match(/OVERWRITTEN/);
+    it("allows overwriting of variables", function(done) {
+      browser.findElement(By.css('h3')).getText().then(function(text) {
+        expect(text).to.match(/OVERWRITTEN/);
+        done();
+      });
     });
 
-    it("data-locals attribute", function() {
-      expect(browser.query('[data-locals]')).to.be.ok();
+    it("data-locals attribute", function(done) {
+      browser.findElements(By.css('[data-locals]')).then(function(els) {
+        expect(els).to.be.ok();
+        done();
+      });
     });
 
-    it("data-view-name attribute", function() {
-      expect(browser.query('[data-view-name]')).to.be.ok();
+    it("data-view-name attribute", function(done) {
+      browser.findElements(By.css('[data-view-name]')).then(function(els) {
+        expect(els).to.be.ok();
+        done();
+      });
     });
   });
 });
 
 describe("Client Side", function() {
-  beforeEach(function(done) { browser.visit('/', done); });
+  beforeEach(function() { browser.get('http://localhost:12345/'); });
+
   describe("Rendering", function() {
-    it("jade templates", function() {
-      expect(browser.text('a')).to.match(/This was rendered as a small view from the/);
+    it("jade templates", function(done) {
+      browser.findElement(By.css('a')).getText().then(function(text) {
+        expect(text).to.match(/This was rendered as a small view from the/);
+        done();
+      });
     });
-    it("variables", function() {
-      expect(browser.text('a')).to.match(/client/);
+
+    it("variables", function(done) {
+      browser.findElement(By.css('a:last-of-type')).getText().then(function(text) {
+        expect(text).to.match(/client/);
+        done();
+      });
     });
   });
 
   it("uses setEvents", function(done) {
-    browser.clickLink("This was rendered as a small view from the client", function() {
-      expect(browser.queryAll(".active")).to.have.length(1);
+    browser.findElement(By.linkText("This was rendered as a small view from the client")).click();
+    browser.findElements(By.css('.active')).then(function(els) {
+      expect(els).to.have.length(1);
       done();
     });
   });
@@ -106,8 +131,10 @@ describe("Client Side", function() {
 
 describe("Glue", function() {
   it("registers client side views for server rendered templates", function(done) {
-    browser.clickLink("This was rendered as a small view from the server", function() {
-      expect(browser.queryAll(".active")).to.have.length(1);
+    browser.get('http://localhost:12345/');
+    browser.findElement(By.linkText("This was rendered as a small view from the server")).click();
+    browser.findElements(By.css('.active')).then(function(els) {
+      expect(els).to.have.length(1);
       done();
     });
   });
