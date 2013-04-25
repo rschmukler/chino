@@ -270,14 +270,14 @@ view and DataStore.
 
 To do that, you can specify `Chino.Middleware.postRender`.
 
-    Chino.Middleware.postRender = function($, req, res) {
+    Chino.Middleware.postRender = function($, req, res, view) {
       $('head').prepend("<script>alert("Hello World")</script>");
     };
 
 Additionally, you can also make `Chino.Middleware.postRender` work with async
 operations by specifying a fourth argument, `done` and calling it.
 
-    Chino.Middleware.postRender = function($, req, res, done) {
+    Chino.Middleware.postRender = function($, req, res, view, done) {
       setTimeout(function() {
         $('head').prepend("<script>alert("Hello World")</script>");
         done();
