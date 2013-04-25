@@ -21,17 +21,15 @@ describe("Chino", function() {
 
   describe("Middleware", function() {
     it("passes along the data to init the DataStore", function(done) {
+      var DataStore = Chino.DataStore();
       var dataObject = { someProperty: "HelloWorld!" };
-      var dataId = Chino.DataStore.addObject(dataObject);
 
       browser.get('http://localhost:12345/');
 
-      browser.executeScript("window.dataId = \"" + dataId + "\";");
-
       browser.executeScript(function() {
-        return window.Chino.DataStore.get(dataId).someProperty;
+        return data = window.Chino.DataStore.dump();
       }).then(function(result) {
-        expect(result).to.be(dataObject.someProperty);
+        expect(result).to.not.be.empty();
         done();
       });
     });
@@ -44,32 +42,33 @@ describe("Chino", function() {
   });
 
   describe("Data Store", function() {
+    var DataStore = Chino.DataStore();
     describe("addLookupIdMethod", function() {
       it("adds a way to lookup the id of an object", function() {
-        Chino.DataStore.addLookupIdMethod('slug');
+        DataStore.addLookupIdMethod('slug');
         var obj = {slug: 'i-like-turtles', title: "Turtles attacking New York" };
-        expect(Chino.DataStore.addObject(obj)).to.be(obj.slug);
+        expect(DataStore.addObject(obj)).to.be(obj.slug);
       });
     });
 
     describe(".dump", function() {
       it("returns a object representation of the data store", function() {
         var obj = { title: "Some title" },
-            id = Chino.DataStore.addObject(obj);
+            id = DataStore.addObject(obj);
 
-        expect(Chino.DataStore.dump()).to.have.property(id, obj);
+        expect(DataStore.dump()).to.have.property(id, obj);
       });
     });
 
     describe(".addObject", function() {
       it("returns the lookup id of the object", function() {
         var obj = { id: 1, title: "Yippie!" };
-        expect(Chino.DataStore.addObject(obj)).to.be.ok();
+        expect(DataStore.addObject(obj)).to.be.ok();
       });
 
       it("generates an id if it doesn't already have one", function() {
         var obj = { title: "Yippie" };
-        expect(Chino.DataStore.addObject(obj)).to.be.a('string');
+        expect(DataStore.addObject(obj)).to.be.a('string');
       });
     });
 
@@ -77,15 +76,15 @@ describe("Chino", function() {
       var obj, lookupId;
       before(function() {
         obj = { title: "this is a test", somethingElse: true };
-        lookupId = Chino.DataStore.addObject(obj);
+        lookupId = DataStore.addObject(obj);
       });
 
       it("returns the object from the datastore", function() {
-        expect(Chino.DataStore.get(lookupId)).to.be(obj);
+        expect(DataStore.get(lookupId)).to.be(obj);
       });
 
       it("returns null if the object doesn't exist", function() {
-        expect(Chino.DataStore.get("sfadjadfslkj")).to.be(null);
+        expect(DataStore.get("sfadjadfslkj")).to.be(null);
       });
     });
   });
