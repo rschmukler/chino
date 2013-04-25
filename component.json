@@ -21,6 +21,7 @@
   "scripts": [
     "index.js",
     "lib/chino.js",
+    "lib/data-store.js",
     "lib/view/index.js",
     "lib/view/client.js",
     "lib/view/glue.js"

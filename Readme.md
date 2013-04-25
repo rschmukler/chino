@@ -179,6 +179,111 @@ glue. Chino's glue will find views rendered server side and instantiate client
 side equivalents with the appropriate DOM elements. This means that you can
 define events for views rendered server side and have them apply client side.
 
+
+## Using the DataStore
+
+To avoid creating multiple instances of what should be the same object, Chino
+uses `Chino.DataStore` which intelligently maps the "same" objects to the same
+location in the `Chino.DataStore`. `Chino.DataStore` can then be dumped out client side to
+create instances of the objects.
+
+If you want to manipulate the `Chino.DataStore` directly you may do so with the
+following methods:
+
+### .addObject(obj)
+
+Adds the object to `Chino.DataStore` and returns the `lookupId` to get it out with.
+
+If it can auto-determine the `lookupId` of the object (more on this below) it will use
+it. Otherwise it will randomly generate an `lookupId` instead.
+
+### .get(lookupId)
+
+Returns the object from `Chino.DataStore`. If the object cannot be found, it
+returns `null` instead.
+
+### .addLookupIdMethod(str)
+
+Informs Chino on additional ways to attempt to auto-resolve the `lookupId` of the
+object.
+
+    var article = { title: "This is a catchy article",
+                    description: "This is some content which you shou...",
+                    slug: 'this-is-a-catchy-article' };
+
+    Chino.DataStore.addLookupIdMethod('slug');
+
+    var lookupId = Chino.DataStore.addObject(article);
+
+    console.log(lookupId);
+     => this-is-a-catchy-article
+
+### .dump()
+
+Returns the contents of the `DataStore`. Useful for Middleware to expose it to
+the client. See below.
+
+## Middleware
+
+By default, Chino includes some Middleware to aid developing express
+applications.
+
+The middleware exposes one method, `res.renderChinoView`. This method behaves
+differently depending on how you configure the Middleware.
+
+### Configuring a layout
+
+#### Setting the file
+
+If you want a jade template to render as the layout of the application, without
+any `Chino.View` associated with it.
+
+    Chino.Middleware.layoutPath = '/some/path/to/file';
+
+From then on, any `Chino.View` rendered with `res.renderChinoView` will be
+inserted in the `body` element.
+
+#### Set where the view gets inserted
+
+If you'd rather it gets inserted elsewhere you can configure
+`Chino.Middleware.insertPoint` with a CSS querystring for where you'd like it.
+
+    Chino.Middleware.insertPoint = '#app-content';
+
+#### Passing additional variables into the template.
+
+Sometimes you need additional variables for your template to be rendered. You
+can define that by setting `Chino.Middleware.exposeVariables`
+
+    Chino.Middleware.exposeVariables = function(req, res) {
+      return {
+        errorMessage: req.flash('error'),
+        infoMessage:  req.flash('info'),
+        signedIn:     res.user != undefined
+      }
+    };
+
+### Manipulating the DOM after render 
+
+If you need to manipulate the DOM after the Middleware is done rendering the
+view and DataStore.
+
+To do that, you can specify `Chino.Middleware.postRender`.
+
+    Chino.Middleware.postRender = function($, req, res) {
+      $('head').prepend("<script>alert("Hello World")</script>");
+    };
+
+Additionally, you can also make `Chino.Middleware.postRender` work with async
+operations by specifying a fourth argument, `done` and calling it.
+
+    Chino.Middleware.postRender = function($, req, res, done) {
+      setTimeout(function() {
+        $('head').prepend("<script>alert("Hello World")</script>");
+        done();
+      }, 500);
+    };
+
 # License
 
   MIT

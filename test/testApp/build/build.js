@@ -1581,8 +1581,10 @@ module.exports = require('./lib/chino');
 
 });
 require.register("chino/lib/chino.js", function(exports, require, module){
-var isBrowser = require('is-browser');
+var isBrowser = require('is-browser'),
+    DataStore = require('./data-store');
 
+exports.DataStore = DataStore;
 exports.View = require('./view');
 exports.isBrowser = isBrowser;
 
@@ -1602,16 +1604,78 @@ if(!isBrowser)
   exports.ready = function(fn) {
     domready(function() {
       glue();
+      DataStore.init();
       if(typeof fn != 'undefined') fn();
     });
   };
 }
 
 });
+require.register("chino/lib/data-store.js", function(exports, require, module){
+var isBrowser = require('is-browser');
+
+var data = {};
+
+var DataStore = module.exports = {
+  _lookupMethods: ['id'],
+
+  addLookupIdMethod: function(method) {
+    DataStore._lookupMethods.push(method);
+  },
+
+  addObject: function(obj) {
+    var id = getIdForObject(obj);
+    data[id] = obj;
+    return id;
+  },
+
+  dump: function() {
+    return data;
+  },
+
+  get: function(id) {
+    if(data[id])
+      return data[id];
+    else
+      return null;
+  }
+};
+
+if(isBrowser) {
+  DataStore.init = function() {
+    data = window._chinoDataStore;
+    //delete window._chinoDataStore;
+  };
+}
+
+
+function getIdForObject(obj) {
+  for(var i = 0; i < DataStore._lookupMethods.length; ++i) {
+    var method = DataStore._lookupMethods[i];
+    if(obj[method]) {
+      if(typeof obj[method] == 'function') {
+        return obj[method]();
+      }
+      else
+        return obj[method];
+    }
+  }
+
+  // We couldn't lookup an ID, so let's make one.
+  var idString = "";
+  var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  for(i = 0; i < 16; ++ i) {
+    idString += possible.charAt(Math.floor(Math.random() * possible.length));
+  }
+  return idString;
+}
+
+});
 require.register("chino/lib/view/index.js", function(exports, require, module){
 var isBrowser = require('is-browser'),
     extend = require('extend'),
-    Chino = require('../chino.js');
+    Chino = require('../chino.js'),
+    DataStore = Chino.DataStore;
 
 
  var createView = module.exports = function createView() {
@@ -1710,15 +1774,17 @@ ChinoView.prototype.render = function(locals) {
 ChinoView.prototype._postRenderTemplate = function() {
   this.$el.attr('data-view-name', this.View._name);
   if(!isBrowser) {
-    this.$el.attr('data-locals', JSON.stringify(this.locals));
+    this.$el.attr('data-chino-id', DataStore.addObject(this.locals));
   }
 };
 
 
 });
 require.register("chino/lib/view/client.js", function(exports, require, module){
-View = require('./index');
-extend = require('extend');
+var Chino = require('../chino'),
+    DataStore = Chino.DataStore,
+    View = require('./index');
+    extend = require('extend');
 
 
 View.engine = View.engine || require('dom');
@@ -1732,7 +1798,7 @@ module.exports = function(ChinoView) {
   };
 
   ChinoView.prototype._parseLocals = function() {
-    this.locals = JSON.parse(this.$el.attr('data-locals'));
+    this.locals = DataStore.get(this.$el.attr('data-chino-id'));
     for(var obj in this.View._specials) {
       if(this.locals[obj]) this.locals[obj] = new this.View._specials[obj](this.locals[obj]);
     }
@@ -1997,6 +2063,7 @@ require.alias("small-view/index.js", "small-view/index.js");
 
 require.alias("chino/index.js", "testApp/deps/chino/index.js");
 require.alias("chino/lib/chino.js", "testApp/deps/chino/lib/chino.js");
+require.alias("chino/lib/data-store.js", "testApp/deps/chino/lib/data-store.js");
 require.alias("chino/lib/view/index.js", "testApp/deps/chino/lib/view/index.js");
 require.alias("chino/lib/view/client.js", "testApp/deps/chino/lib/view/client.js");
 require.alias("chino/lib/view/glue.js", "testApp/deps/chino/lib/view/glue.js");
