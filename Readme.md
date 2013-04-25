@@ -172,6 +172,11 @@ should only listen to events on elements within your `Chino.View` and not the
       }
     });
 
+## Nested Views
+
+Children views should be rendered with `parentView.renderChild(childView,
+locals);`.
+
 ## Gluing Views
 
 After you have defined your views, you can use `Chino.ready` to apply Chino's
@@ -186,6 +191,12 @@ To avoid creating multiple instances of what should be the same object, Chino
 uses `Chino.DataStore` which intelligently maps the "same" objects to the same
 location in the `Chino.DataStore`. `Chino.DataStore` can then be dumped out client side to
 create instances of the objects.
+
+To get a view to use the `DataStore`, you must specify an instance of it when
+you instantiate a view:
+
+    var dataStore = Chino.DataStore();
+    var todoView = new TodoView({_ds: dataStore);
 
 If you want to manipulate the `Chino.DataStore` directly you may do so with the
 following methods:
@@ -230,6 +241,9 @@ applications.
 
 The middleware exposes one method, `res.renderChinoView`. This method behaves
 differently depending on how you configure the Middleware.
+
+`res.renderChinoView` will also take care of setting `view._ds` to use a shared
+data-store for the request.
 
 ### Configuring a layout
 
