@@ -21,9 +21,6 @@ describe("Chino", function() {
 
   describe("Middleware", function() {
     it("passes along the data to init the DataStore", function(done) {
-      var DataStore = Chino.DataStore();
-      var dataObject = { someProperty: "HelloWorld!" };
-
       browser.get('http://localhost:12345/');
 
       browser.executeScript(function() {
@@ -39,6 +36,7 @@ describe("Chino", function() {
         expect(Chino.Middleware.exposeVariables()).to.be.empty();
       });
     });
+
   });
 
   describe("Data Store", function() {
