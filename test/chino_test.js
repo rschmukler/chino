@@ -100,7 +100,7 @@ describe("Chino", function() {
 
   describe("Creating Views", function() {
     it("sets hidden properties from object", function() {
-      var SomeView = Chino.View({name: 'SomeView', basePath: __dirname + '/testApp/big-view' , template: 'big-view.jade'});
+      var SomeView = Chino.View.extend({name: 'SomeView', basePath: __dirname + '/testApp/big-view' , template: 'big-view.jade'});
       expect(SomeView).to.have.property('_name', 'SomeView');
       expect(SomeView).to.have.property('_basePath', __dirname + '/testApp/big-view');
       expect(SomeView).to.have.property('_template', 'big-view.jade');
@@ -116,14 +116,6 @@ describe("Chino", function() {
       b.render({someVariable: 'I like turtles', overwrittenVariable: 'Pie'});
       expect(called).to.be(true);
       BigView.prototype.initialize = undefined;
-    });
-
-    it("can be extended", function() {
-      var called = false, b;
-      BigView.extend({initialize: function() { called = true; }});
-      b = new BigView();
-      b.render({someVariable: 'I like turtles', overwrittenVariable: 'Pie'});
-      expect(called).to.be(true);
     });
   });
 

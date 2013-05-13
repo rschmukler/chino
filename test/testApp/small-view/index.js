@@ -23,15 +23,15 @@ Function.prototype.bind = Function.prototype.bind || function(to){
 
 var path = Chino.isBrowser ? 'small-view' : __dirname;
 
-var SmallView = module.exports = Chino.View({
+var SmallView = module.exports = Chino.View.extend({
   name: 'SmallView',
   basePath: path,
-  template: 'small-view.jade'
-});
+  template: 'small-view.jade',
 
-SmallView.prototype.setEvents = function() {
-  this.$el.on('click', this.toggleClass.bind(this));
-};
+  uiEvents: {
+    'click': 'toggleClass'
+  }
+});
 
 SmallView.prototype.toggleClass = function() {
   this.$el.toggleClass('active');

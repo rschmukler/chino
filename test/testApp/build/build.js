@@ -1410,15 +1410,15 @@ Function.prototype.bind = Function.prototype.bind || function(to){
 
 var path = Chino.isBrowser ? 'small-view' : __dirname;
 
-var SmallView = module.exports = Chino.View({
+var SmallView = module.exports = Chino.View.extend({
   name: 'SmallView',
   basePath: path,
-  template: 'small-view.jade'
-});
+  template: 'small-view.jade',
 
-SmallView.prototype.setEvents = function() {
-  this.$el.on('click', this.toggleClass.bind(this));
-};
+  uiEvents: {
+    'click': 'toggleClass'
+  }
+});
 
 SmallView.prototype.toggleClass = function() {
   this.$el.toggleClass('active');
@@ -1436,6 +1436,171 @@ buf.push('<a href="#">This was rendered as a small view from the ' + escape((int
 }
 return buf.join("");
 }
+});
+require.register("component-emitter/index.js", function(exports, require, module){
+
+/**
+ * Module dependencies.
+ */
+
+var index = require('indexof');
+
+/**
+ * Expose `Emitter`.
+ */
+
+module.exports = Emitter;
+
+/**
+ * Initialize a new `Emitter`.
+ *
+ * @api public
+ */
+
+function Emitter(obj) {
+  if (obj) return mixin(obj);
+};
+
+/**
+ * Mixin the emitter properties.
+ *
+ * @param {Object} obj
+ * @return {Object}
+ * @api private
+ */
+
+function mixin(obj) {
+  for (var key in Emitter.prototype) {
+    obj[key] = Emitter.prototype[key];
+  }
+  return obj;
+}
+
+/**
+ * Listen on the given `event` with `fn`.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.on = function(event, fn){
+  this._callbacks = this._callbacks || {};
+  (this._callbacks[event] = this._callbacks[event] || [])
+    .push(fn);
+  return this;
+};
+
+/**
+ * Adds an `event` listener that will be invoked a single
+ * time then automatically removed.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.once = function(event, fn){
+  var self = this;
+  this._callbacks = this._callbacks || {};
+
+  function on() {
+    self.off(event, on);
+    fn.apply(this, arguments);
+  }
+
+  fn._off = on;
+  this.on(event, on);
+  return this;
+};
+
+/**
+ * Remove the given callback for `event` or all
+ * registered callbacks.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.off =
+Emitter.prototype.removeListener =
+Emitter.prototype.removeAllListeners = function(event, fn){
+  this._callbacks = this._callbacks || {};
+
+  // all
+  if (0 == arguments.length) {
+    this._callbacks = {};
+    return this;
+  }
+
+  // specific event
+  var callbacks = this._callbacks[event];
+  if (!callbacks) return this;
+
+  // remove all handlers
+  if (1 == arguments.length) {
+    delete this._callbacks[event];
+    return this;
+  }
+
+  // remove specific handler
+  var i = index(callbacks, fn._off || fn);
+  if (~i) callbacks.splice(i, 1);
+  return this;
+};
+
+/**
+ * Emit `event` with the given args.
+ *
+ * @param {String} event
+ * @param {Mixed} ...
+ * @return {Emitter}
+ */
+
+Emitter.prototype.emit = function(event){
+  this._callbacks = this._callbacks || {};
+  var args = [].slice.call(arguments, 1)
+    , callbacks = this._callbacks[event];
+
+  if (callbacks) {
+    callbacks = callbacks.slice(0);
+    for (var i = 0, len = callbacks.length; i < len; ++i) {
+      callbacks[i].apply(this, args);
+    }
+  }
+
+  return this;
+};
+
+/**
+ * Return array of callbacks for `event`.
+ *
+ * @param {String} event
+ * @return {Array}
+ * @api public
+ */
+
+Emitter.prototype.listeners = function(event){
+  this._callbacks = this._callbacks || {};
+  return this._callbacks[event] || [];
+};
+
+/**
+ * Check if this emitter has `event` handlers.
+ *
+ * @param {String} event
+ * @return {Boolean}
+ * @api public
+ */
+
+Emitter.prototype.hasListeners = function(event){
+  return !! this.listeners(event).length;
+};
+
 });
 require.register("ForbesLindesay-is-browser/client.js", function(exports, require, module){
 module.exports = true;
@@ -1582,9 +1747,8 @@ module.exports = require('./lib/chino');
 });
 require.register("chino/lib/chino.js", function(exports, require, module){
 var isBrowser = require('is-browser'),
-    DataStore = require('./data-store');
+    dataStore = require('./data-store');
 
-exports.DataStore = DataStore;
 exports.View = require('./view');
 exports.isBrowser = isBrowser;
 
@@ -1595,70 +1759,140 @@ exports.use = function(plugin) {
 if(!isBrowser)
 {
   exports.BuilderPlugins = require('./build');
-  exports.Middleware = require('./middleware');
+  exports.Middleware = require('./server-middleware');
+  exports.DataStore = dataStore;
 } else {
   var domready = require('domready'),
           glue = require('./view/glue.js');
 
+  exports.Middleware = require('./client-middleware');
+  exports.DataStore = dataStore();
   exports.Views = {};
   exports.ready = function(fn) {
     domready(function() {
+      exports.DataStore.init();
       glue();
-      DataStore.init();
       if(typeof fn != 'undefined') fn();
     });
   };
 }
 
 });
+require.register("chino/lib/client-middleware.js", function(exports, require, module){
+var View = require('./view');
+
+var $ = View.engine;
+
+var activeView;
+
+var Middleware = module.exports = function(req, res, next) {
+  res.renderChinoView = function(view, locals) {
+    if(activeView && activeView.destroy)
+      activeView.emit('destroy');
+
+    activeView = view;
+    var rendered = view.render(locals);
+    var $el = $(Middleware.insertPoint);
+    $el.html('');
+
+    for(var i = 0; i < rendered.length; ++i)
+      $el.append(rendered[i]);
+  };
+  next();
+};
+
+});
 require.register("chino/lib/data-store.js", function(exports, require, module){
 var isBrowser = require('is-browser');
 
-var data = {};
+var clientStore, clientInit = false;
 
-var DataStore = module.exports = {
-  _lookupMethods: ['id'],
+module.exports = function() {
+  var data = {},
+      DataStore;
 
-  addLookupIdMethod: function(method) {
-    DataStore._lookupMethods.push(method);
-  },
+  if(!clientStore) {
+    DataStore = {
+      _lookupMethods: [],
 
-  addObject: function(obj) {
-    var id = getIdForObject(obj);
-    data[id] = obj;
-    return id;
-  },
+      addLookupIdMethod: function(method) {
+        DataStore._lookupMethods.push(method);
+      },
 
-  dump: function() {
-    return data;
-  },
+      addObject: function(obj) {
+        if(obj) {
+          var id = getIdForObject(DataStore, obj);
+          if(!data[id])
+            if(obj.toChinoDataStore)
+              data[id] = obj.toChinoDataStore();
+            else
+              data[id] = obj;
+          return id;
+        } else {
+          return null;
+        }
+      },
 
-  get: function(id) {
-    if(data[id])
-      return data[id];
-    else
-      return null;
+      replaceObject: function(obj, id) {
+        id = id || getIdForObject(DataStore, obj);
+        if(obj.toChinoDataStore)
+          data[id] = obj.toChinoDataStore();
+        else
+          data[id] = obj;
+        return id;
+      },
+
+      dump: function() {
+        return data;
+      },
+
+      get: function(id) {
+        if(data[id])
+          return data[id];
+        else
+          return null;
+      }
+    };
   }
+
+  if(isBrowser) {
+    if(clientStore)
+      return clientStore;
+
+    DataStore.init = function() {
+      if(!clientInit) {
+        data = window._chinoDataStore;
+        delete window._chinoDataStore;
+        clientInit = true;
+      }
+    };
+    clientStore = DataStore;
+  }
+
+  return DataStore;
 };
 
-if(isBrowser) {
-  DataStore.init = function() {
-    data = window._chinoDataStore;
-    //delete window._chinoDataStore;
-  };
-}
+function getIdForObject(ds, obj) {
+  var result;
+  if(obj._chinoDsId)
+    return obj._chinoDsId;
 
-
-function getIdForObject(obj) {
-  for(var i = 0; i < DataStore._lookupMethods.length; ++i) {
-    var method = DataStore._lookupMethods[i];
+  for(var i = 0; i < ds._lookupMethods.length; ++i) {
+    var method = ds._lookupMethods[i];
     if(obj[method]) {
       if(typeof obj[method] == 'function') {
-        return obj[method]();
+        result = obj[method]();
+        break;
       }
-      else
-        return obj[method];
+      else {
+        result = obj[method];
+        break;
+      }
     }
+  }
+
+  if(result) {
+    return result;
   }
 
   // We couldn't lookup an ID, so let's make one.
@@ -1667,6 +1901,7 @@ function getIdForObject(obj) {
   for(i = 0; i < 16; ++ i) {
     idString += possible.charAt(Math.floor(Math.random() * possible.length));
   }
+  obj._chinoDsId = idString;
   return idString;
 }
 
@@ -1674,77 +1909,94 @@ function getIdForObject(obj) {
 require.register("chino/lib/view/index.js", function(exports, require, module){
 var isBrowser = require('is-browser'),
     extend = require('extend'),
-    Chino = require('../chino.js'),
-    DataStore = Chino.DataStore;
+    Chino = require('../chino.js');
 
-
- var createView = module.exports = function createView() {
-  var View = function(locals) {
-    this.View = View;
-    this.locals = locals || {};
-
-
-    // Set $el
-    if(isBrowser) {
-      //Check to see if we have an el instead of locals
-      if(locals && (locals instanceof createView.engine || typeof locals.length == 'function')) {
-        this.$el = createView.engine(locals);
-        this.$el.attr('data-chino-init', true);
-        this._parseLocals();
-      }
-    } else {
-      this.$el = require('cheerio').load('');
+var emitter;
+if(isBrowser)
+  emitter = require('emitter');
+else
+  emitter = function(obj) {
+    var methods = ['on', 'off', 'once', 'emit'];
+    var noop = function() { };
+    for(var i = 0; i < methods.length; ++i) {
+      obj[methods[i]] = noop;
     }
-
-    if(this.initialize) this.initialize.call(this);
-
-    if(isBrowser && this.$el && this.setEvents) {
-      this.setEvents.call(this);
-    }
-
+    obj.hasListeners = function() { return false; };
+    obj.listeners = function() { return []; };
   };
+
+var ChinoView = module.exports = {};
+    ChinoView.prototype = {};
+
+ChinoView.extend = function() {
+  var SPECIAL_PROPS = ['basePath', 'name', 'template', 'specials', 'elements', 'uiEvents', 'chinoEvents'],
+      i;
 
   var args = Array.prototype.slice.call(arguments);
 
-  View._specials = {};
+  args.splice(0, 0, {});
+  var obj = extend.apply(this, args);
 
-  if(args.length >= 2) {
-    View._name = args.shift();
-    View._basePath = args.shift();
+  var NewView = function(locals) {
+    initializeChinoView.call(this, locals);
+    if(this.initialize)
+      this.initialize();
+    this.emit('initialize');
+    loadElements.call(this);
 
-    options = args.shift() || {};
-    View._template = options.template;
-  } else {
-    var cloneObject = args.shift();
+    if(isBrowser && this.$el)
+      this.emit('ready');
 
-    for(var key in cloneObject) {
-      View['_' + key] = cloneObject[key];
-    }
-  }
-
-  // Set some defaults
-  View._template = View._template || 'template.jade';
-
-  extend(View, ChinoView);
-  extend(View.prototype, ChinoView.prototype);
-
-
-  View._readTemplate();
-
-  View.extend = function(object) {
-    extend(View.prototype, object);
+    this.on('ready', loadElements.bind(this));
   };
 
-  if(isBrowser) {
-    Chino.Views[View._name] = View;
+  for(i = 0; i < SPECIAL_PROPS.length; ++i) {
+    var propName = SPECIAL_PROPS[i];
+    NewView['_' + propName] = obj[propName];
+    delete obj[propName];
   }
 
-  return View;
+  extend(NewView, this);
+  NewView.prototype = extend({}, this.prototype, obj);
+
+  // Set Defaults
+  NewView._template = NewView._template || 'template.jade';
+
+  // Prep the View Object
+
+  // Add it the list of client views
+  if(Chino.Views)
+    Chino.Views[NewView._name] = NewView;
+
+  NewView._readTemplate();
+
+  return NewView;
+
+  function initializeChinoView(locals) {
+    emitter(this);
+    this.View = NewView;
+    this.locals = extend({}, locals);
+    if(isBrowser) {
+      //Check to see if we have an el instead of locals
+      if(locals && (locals instanceof NewView.engine || typeof locals.length == 'function')) {
+        this.$el = NewView.engine(locals);
+        this.$el.attr('data-chino-init', true);
+        this._readFromDataStore();
+      }
+      setChinoEvents.call(this);
+      setUiEvents.call(this);
+    } else {
+      this.$el = require('cheerio').load('');
+    }
+  }
 };
 
-// Static Methods
 
-var ChinoView = function ChinoView() { };
+//////////////////////
+//
+// Static Methods
+//
+//////////////////////
 
 ChinoView._filePath = function() {
   return this._basePath + '/' + this._template;
@@ -1758,65 +2010,179 @@ ChinoView.use = function(plugin) {
 ChinoView.toString = function() { return this._name; };
 
 if(isBrowser) {
-  ChinoView.use(require('./client'));
+  require('./client');
 } else {
-  ChinoView.use(require('./server'));
+  require('./server');
 }
 
+//////////////////////
+//
 // Instance Methods
+//
+//////////////////////
 
 ChinoView.prototype.toString = function() { return this.View._name + ' instance'; };
+
 ChinoView.prototype.render = function(locals) {
   this.renderTemplate(locals);
-  if(this.postRender) this.postRender();
+  if(this.postRender) this.postRender.call(this);
+  if(isBrowser)
+    this.emit('ready');
+  else
+    loadElements.call(this);
   return this.toHTML();
 };
+
 ChinoView.prototype._postRenderTemplate = function() {
   this.$el.attr('data-view-name', this.View._name);
   if(!isBrowser) {
-    this.$el.attr('data-chino-id', DataStore.addObject(this.locals));
+    this._storeInDataStore();
   }
 };
 
+//////////////////////
+//
+// Private Methods
+//
+//////////////////////
+
+function setChinoEvents() {
+  if(isBrowser) {
+    for(var key in this.View._chinoEvents) {
+      var functionName = this.View._chinoEvents[key],
+          functions = functionName.replace(/ /g, '').split(',');
+
+      for(var i = 0; i < functions.length; ++i) {
+        this.on(key, this[functions[i]].bind(this));
+      }
+    }
+  }
+}
+
+function setUiEvents() {
+  if(isBrowser) {
+    if(this.$el) {
+      this.on('destroy', removeUiEvents.bind(this));
+      for(var key in this.View._uiEvents) {
+        var args = key.split(' '),
+            event = args.shift(),
+            selector = args.join(' '),
+            functionName = this.View._uiEvents[key];
+
+        if(selector.length)
+          this.$el.on(event, selector, this[functionName].bind(this));
+        else
+          this.$el.on(event, this[functionName].bind(this));
+      }
+    } else
+      this.on('ready', setUiEvents.bind(this));
+  }
+}
+
+function removeUiEvents() {
+  for(var key in this.View._uiEvents) {
+    var args = key.split(' '),
+        event = args.shift();
+
+    this.$el.off(event);
+  }
+}
+
+function loadElements() {
+  if(!this.$el) return;
+
+  for(var key in this.View._elements) {
+    var variableName = '$' + key,
+        selector = this.View._elements[key];
+
+    if(this.$el.find)
+      this[variableName] = this.$el.find(selector);
+    else
+      this[variableName] = this.$el(selector);
+  }
+}
 
 });
 require.register("chino/lib/view/client.js", function(exports, require, module){
 var Chino = require('../chino'),
-    DataStore = Chino.DataStore,
-    View = require('./index');
+    DataStore = require('../data-store')(),
+    ChinoView = require('./index'),
     extend = require('extend');
 
 
-View.engine = View.engine || require('dom');
+ChinoView.engine = ChinoView.engine || require('dom');
 
-module.exports = function(ChinoView) {
-
-  ChinoView._readTemplate = function() {
-    var template = this._filePath().replace(/\.jade/, '.js');
-    var globalRequire = window.require;
-    this._renderer = globalRequire(template);
-  };
-
-  ChinoView.prototype._parseLocals = function() {
-    this.locals = DataStore.get(this.$el.attr('data-chino-id'));
-    for(var obj in this.View._specials) {
-      if(this.locals[obj]) this.locals[obj] = new this.View._specials[obj](this.locals[obj]);
-    }
-  };
-
-  ChinoView.prototype.renderTemplate = function(locals) {
-    window.item = this;
-    var variables = extend({view: this}, this.locals, locals);
-    this.$el = View.engine(this.View._renderer(variables));
-    this._postRenderTemplate();
-    if(this.setEvents) this.setEvents.call(this);
-    return this.toHTML();
-  };
-
-  ChinoView.prototype.toHTML = function() {
-    return this.$el;
-  };
+ChinoView._readTemplate = function() {
+  var template = this._filePath().replace(/\.jade/, '.js');
+  var globalRequire = window.require;
+  this._renderer = globalRequire(template);
 };
+
+ChinoView.prototype._readFromDataStore = function() {
+  var locals = DataStore.get(this.$el.attr('data-chino-id'));
+  if(locals) {
+    this.locals = locals;
+
+    //Instantiate the specials
+    for(var obj in this.View._specials) {
+      var Model = this.View._specials[obj];
+
+      var wasSpecial = resolveChinoObjects.call(this, obj);
+      var instantiated = instantiateSpecials.call(this, Model, obj);
+
+      if(wasSpecial && instantiated) {
+        DataStore.replaceObject(this.locals[obj], wasSpecial);
+      }
+    }
+
+  } else {
+    this.locals = {};
+  }
+};
+
+ChinoView.prototype.renderTemplate = function(locals) {
+  window.item = this;
+  var variables = extend({view: this}, this.locals, locals);
+  var $renderedEl = ChinoView.engine(this.View._renderer(variables));
+  if(this.$el) {
+    this.$el.replaceWith($renderedEl);
+    this.$el = $renderedEl;
+  }
+  else
+    this.$el = $renderedEl;
+
+  this._postRenderTemplate();
+  if(this.setEvents) this.setEvents.call(this);
+  return this.toHTML();
+};
+
+ChinoView.prototype.toHTML = function() {
+  return this.$el;
+};
+
+ChinoView.prototype.renderChild = function(view, locals) {
+  this.on('destroy', function() { view.emit('destroy'); });
+  return view.render(locals);
+};
+
+function resolveChinoObjects(obj) {
+  var id = this.locals[obj] ? this.locals[obj]._chinoFromId : undefined;
+  if(id) {
+    this.locals[obj] = DataStore.get(id);
+    return id;
+  }
+  return false;
+}
+
+function instantiateSpecials(Model, obj) {
+  var attrs = this.locals[obj];
+  if(attrs  && !(attrs instanceof Model)) {
+    this.locals[obj] = new Model(this.locals[obj]);
+    return true;
+  } else {
+    return false;
+  }
+}
 
 });
 require.register("chino/lib/view/glue.js", function(exports, require, module){
@@ -2063,6 +2429,7 @@ require.alias("small-view/index.js", "small-view/index.js");
 
 require.alias("chino/index.js", "testApp/deps/chino/index.js");
 require.alias("chino/lib/chino.js", "testApp/deps/chino/lib/chino.js");
+require.alias("chino/lib/client-middleware.js", "testApp/deps/chino/lib/client-middleware.js");
 require.alias("chino/lib/data-store.js", "testApp/deps/chino/lib/data-store.js");
 require.alias("chino/lib/view/index.js", "testApp/deps/chino/lib/view/index.js");
 require.alias("chino/lib/view/client.js", "testApp/deps/chino/lib/view/client.js");
@@ -2089,6 +2456,9 @@ require.alias("component-css/index.js", "component-dom/deps/css/index.js");
 require.alias("component-sort/index.js", "component-dom/deps/sort/index.js");
 
 require.alias("component-query/index.js", "component-dom/deps/query/index.js");
+
+require.alias("component-emitter/index.js", "chino/deps/emitter/index.js");
+require.alias("component-indexof/index.js", "component-emitter/deps/indexof/index.js");
 
 require.alias("ForbesLindesay-is-browser/client.js", "chino/deps/is-browser/client.js");
 require.alias("ForbesLindesay-is-browser/client.js", "chino/deps/is-browser/index.js");
