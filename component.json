@@ -12,6 +12,7 @@
   ],
   "dependencies": {
     "component/dom": "*",
+    "component/emitter": "*",
     "ForbesLindesay/is-browser": "*",
     "rschmukler/node-extend": "*",
     "jb55/domready": "*"
