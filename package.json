@@ -23,7 +23,7 @@
   "author": "Ryan Schmukler",
   "license": "MIT",
   "dependencies": {
-    "jade": "~0.28.2",
+    "jade": "~0.30.0",
     "is-browser": "~2.0.0",
     "cheerio": "0.11.0",
     "batch": "~0.3.2",
